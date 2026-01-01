@@ -1,8 +1,118 @@
+----------------------------------------------------------------------------------------------------
 Mills C++ Style Guide - Draft v1.0
-CHAPTER 1: C++ Version
-(Pending: Specification of C++17/20/23 baseline)
+----------------------------------------
 
+----------------------------------------------------------------------------------------------------
+CHAPTER 1: C++ Version
+----------------------------------------
+CHAPTER 1: C++ Version
+Definition The specific revision of the ISO C++ Standard used for the project.
+
+Pros
+
+Predictability: Ensures all developers, CI/CD pipelines, and production environments use a consistent feature set.
+
+Modernity: Allows the use of features like std::expected (C++23) or concepts (C++20) which significantly improve the safety of exception-based code.
+
+Cons
+
+Toolchain Requirements: Newer standards may require upgrading compilers (GCC/Clang/MSVC) and build tools (CMake/Bazel), which can be a hurdle for legacy environments.
+
+Decision The project will use C++20 as the minimum baseline. Features from C++23 are encouraged where compiler support is verified across the team’s toolchains.
+
+Rationale C++20 introduces Concepts and Coroutines, which are transformative for writing safe, expressive code. Specifically for our exception policy, C++20/23 features allow for more expressive template constraints, ensuring that generic code only accepts types with noexcept move constructors when performance is critical.
+
+
+----------------------------------------------------------------------------------------------------
+CHAPTER 2:
+----------------------------------------
+2.1. Self-contained Headers
+Definition A header file must have everything it needs to compile on its own. If you include it, you shouldn't have to include anything else first.
+
+Pros
+
+Reduced Fragility: Prevents "Order-of-Include" bugs where a file compiles in one place but fails in another.
+
+Ease of Use: Simplifies the developer experience; include "logger.h" just works.
+
+Cons
+
+Potential for Bloat: May lead to including more than is strictly necessary if not managed carefully.
+
+Decision All header files must be self-contained. They must use #define guards and include all necessary dependencies for their own declarations.
+
+Rationale In a complex system, headers often act as the "API Contract." If a header is not self-contained, it implies a hidden dependency. For engineers working near the assembly/C level, this is critical: transparency in what is being pulled into the translation unit is paramount for managing binary size and compile times.
+
+2.2. The #define Guard
+Definition A preprocessor mechanism to prevent a header from being included multiple times in a single translation unit.
+
+Decision All headers will use #ifndef guards. While #pragma once is widely supported, the standard #ifndef guard remains the most portable and robust method across all toolchains.
+
+Format: <PROJECT>_<PATH>_<FILE>_H_
+
+Example
+
+C++
+
+#ifndef MILLS_CORE_NETWORK_SOCKET_H_
+#define MILLS_CORE_NETWORK_SOCKET_H_
+
+// Header content...
+
+#endif  // MILLS_CORE_NETWORK_SOCKET_H_
+2.3. Forward Declarations
+Definition Declaring the existence of a type without providing its full definition.
+
+Pros
+
+Compile Speed: Reduces the "Include Web," potentially shaving minutes off large builds.
+
+Lower Coupling: Limits the number of files that need to be recompiled when a header changes.
+
+Cons
+
+Exception Safety Obstacle: You cannot use a forward-declared type as a data member if it's managed by a std::unique_ptr unless the destructor is defined in the .cc file.
+
+Hidden Types: Makes it harder for tools (and humans) to find the actual definition.
+
+Decision Avoid forward declarations where possible; use #include instead. Forward declarations should be reserved for breaking circular dependencies or extremely heavy headers that are known to bottleneck build times.
+
+Rationale Google’s guide is very pro-forward-declaration to save compile time. However, in our guide, correctness and RAII safety take precedence. Forward declarations often interact poorly with smart pointers and templates. For a mid-tier engineer, the slight hit to compile time is a fair trade for the clarity of having the full type definition available.
+
+2.4. Names and Order of Includes
+Definition The standard sequence for including headers in a .cc file.
+
+Decision Use the following order to maximize the chance of catching "non-self-contained" header bugs:
+
+Related header (e.g., filesystem.cc includes filesystem.h).
+
+C system headers (e.g., <unistd.h>, <fcntl.h>).
+
+C++ standard library headers (e.g., <vector>, <exception>).
+
+Other libraries' .h files (e.g., absl/strings/str_cat.h).
+
+Your project's .h files.
+
+Rationale By including the "Related Header" first, you ensure it is self-contained. If it relies on a hidden dependency from <vector>, the compiler will complain immediately because <vector> hasn't been included yet.
+
+Engineering Note on Chapter 2
+Engineering Note: When dealing with exception-throwing code, be wary of "Include What You Use" (IWYU) tools that might suggest removing a header that is required for an exception type. If you catch std::runtime_error, you must include <stdexcept>, even if you don't use any other functions from that header.
+
+
+
+----------------------------------------------------------------------------------------------------
+CHAPTER :
+----------------------------------------
+----------------------------------------------------------------------------------------------------
+CHAPTER :
+----------------------------------------
+----------------------------------------------------------------------------------------------------
+CHAPTER :
+----------------------------------------
+----------------------------------------------------------------------------------------------------
 CHAPTER 4: Classes
+----------------------------------------
 4.1. Doing Work in Constructors
 Definition Constructors should perform the initialization required to establish the class invariant. We allow constructors to perform operations that might fail (e.g., file I/O, memory allocation).
 
@@ -56,7 +166,9 @@ Rationale A move is a transfer of existing ownership. Marking these noexcept is 
 
 Engineering Note: If a move operation throws, it is often a sign of poor design or a fundamental architectural fault. A move should be a simple pointer swap. If your move requires an allocation that could fail, investigate the design immediately.
 
+----------------------------------------------------------------------------------------------------
 CHAPTER 6: Google-Specific Magic (Modified)
+----------------------------------------
 6.1. Ownership and RAII
 Definition Resource Acquisition Is Initialization (RAII).
 
@@ -64,7 +176,10 @@ Decision Every resource (memory, file handles, mutexes) must be wrapped in a man
 
 Rationale In a codebase with exceptions, RAII is the only way to prevent leaks. Stack unwinding only works if destructors handle the cleanup.
 
+----------------------------------------------------------------------------------------------------
 CHAPTER 7: Other C++ Features
+----------------------------------------
+
 7.1. Exceptions
 Definition A mechanism for signaling errors that allows the program to transfer control to a handler elsewhere in the call stack.
 
