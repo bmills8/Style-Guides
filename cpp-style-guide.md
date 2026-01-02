@@ -2,6 +2,8 @@
 Table of Contents: Mills C++ Style Guide - Draft v1.0
 ----------------------------------------
 
+Preamble) 
+
 CH1) C++ Version
 
 CH2) Header Files Self-contained Headers 
@@ -121,6 +123,11 @@ CH12) Exceptions to the Rules
 Existing Non-conformant Code
 Windows Code
 
+
+----------------------------------------------------------------------------------------------------
+PREAMBLE:
+----------------------------------------
+This serves as a modern but vanilla C++ style guide inspired by Google's C++ Style Guide. The motivation for this guide is to allow Exceptions resulting in a cascading effect throughout Google's guide inspiring a branch of that excellent product. Operating System specific guides are a future goal appendix goal to this guide after it enters production.
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 1: C++ Version
@@ -846,5 +853,7 @@ Engineering Note on Chapter 12
 Engineering Note: Windows API functions often return HRESULT or DWORD error codes. Since Mills is an exception-based guide, create a small "Shim" utility to check these returns and throw a corresponding WindowsException. This keeps your high-level logic clean and consistent with our Chapter 7 policy.
 
 Example: CheckWin32(CreateFile(...)); // Throws on failure
+
+
 
 
