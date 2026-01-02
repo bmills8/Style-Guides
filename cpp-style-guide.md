@@ -4,879 +4,847 @@ Table of Contents: Mills C++ Style Guide - Draft v1.0
 
 CH1) C++ Version
 
-CH2) Header Files
-Self-contained Headers The #define Guard Include What You Use Forward Declarations Defining Functions in Header Files Names and Order of Includes
+CH2) Header Files Self-contained Headers 
+The #define Guard
+Include What You Use
+Forward Declarations
+Defining Functions in Header Files
+Names and Order of Includes
 
-CH3 Scoping
-Namespaces Internal Linkage Nonmember, Static Member, and Global Functions Local Variables Static and Global Variables thread_local Variables
+CH3) Scoping
+Namespaces
+Internal Linkage
+Nonmember, Static Member, and Global Functions
+Local Variables
+Static and Global Variables
+thread_local Variables
 
 CH4) Classes
-Doing Work in Constructors Implicit Conversions Copyable and Movable Types Structs vs. Classes Structs vs. Pairs and Tuples Inheritance Operator Overloading Access Control Declaration Order
-
+Doing Work in Constructors
+Implicit Conversions
+Copyable and Movable Types
+Structs vs. Classes
+Structs vs. Pairs and Tuples
+Inheritance
+Operator Overloading
+Access Control
+Declaration Order
 CH5) Functions
-Inputs and OutputsWrite Short FunctionsFunction OverloadingDefault ArgumentsTrailing Return Type Syntax
+Inputs and Outputs
+Write Short Functions
+Function Overloading
+Default Arguments
+Trailing Return Type Syntax
 
 CH6) Google-Specific Magic
-Ownership and Smart Pointerscpplint
+Ownership and Smart Pointers
+cpplint
 
 CH7) Other C++ Features
-Rvalue ReferencesFriendsExceptionsnoexceptRun-Time Type Information (RTTI)CastingStreamsPreincrement and PredecrementUse of constUse of constexpr, constinit, and constevalInteger TypesFloating-Point TypesArchitecture PortabilityPreprocessor Macros0 and nullptr/NULLsizeofType Deduction (including auto)Class Template Argument DeductionDesignated InitializersLambda ExpressionsTemplate MetaprogrammingConcepts and ConstraintsC++20 modulesCoroutinesBoostDisallowed standard library featuresNonstandard ExtensionsAliasesSwitch Statements
+Rvalue References
+Friends
+Exceptions
+noexcept
+Run-Time Type Information (RTTI)
+Casting
+Streams
+Preincrement and Predecrement
+Use of const
+Use of constexpr, constinit, and consteval
+Integer Types
+Floating-Point Types
+Architecture Portability
+Preprocessor Macros
+0 and nullptr/NULL
+sizeof
+Type Deduction (including auto)
+Class Template Argument Deduction
+Designated Initializers
+Lambda Expressions
+Template Metaprogramming
+Concepts and Constraints
+C++20 Modules
+Coroutines
+Boost
+Disallowed Standard Library Features
+Nonstandard Extensions
+Aliases
+Switch Statements
 
 CH8) Inclusive Language
 
 CH9) Naming
-Choosing NamesFile NamesType NamesConcept NamesVariable NamesConstant NamesFunction NamesNamespace NamesEnumerator NamesTemplate Parameter NamesMacro NamesAliasesExceptions to Naming Rules
-
+Choosing Names
+File Names
+Type Names
+Concept Names
+Variable Names
+Constant Names
+Function Names
+Namespace Names
+Enumerator Names
+Template Parameter Names
+Macro Names
+Aliases
+Exceptions to Naming Rules
 CH10) Comments
-Comment StyleFile CommentsStruct and Class CommentsFunction CommentsVariable CommentsImplementation CommentsPunctuation, Spelling, and GrammarTODO Comments
+Comment Style
+File Comments
+Struct and Class Comments
+Function Comments
+Variable Comments
+Implementation Comments
+Punctuation, Spelling, and Grammar
+TODO Comments
 
 CH11) Formatting
-Line LengthNon-ASCII CharactersSpaces vs. TabsFunction Declarations and DefinitionsLambda ExpressionsFloating-point LiteralsFunction CallsBraced Initializer List FormatLooping and branching statementsPointer and Reference Expressions and TypesBoolean ExpressionsReturn ValuesVariable and Array InitializationPreprocessor DirectivesClass FormatConstructor Initializer ListsNamespace FormattingHorizontal WhitespaceVertical Whitespace
-
+Line Length
+Non-ASCII Characters
+Spaces vs. Tabs
+Function Declarations and Definitions
+Lambda Expressions
+Floating-point Literals
+Function Calls
+Braced Initializer List Format
+Looping and Branching Statements
+Pointer and Reference Expressions and Types
+Boolean Expressions
+Return Values
+Variable and Array Initialization
+Preprocessor Directives
+Class Format
+Constructor Initializer Lists
+Namespace Formatting
+Horizontal Whitespace
+Vertical Whitespace
 CH12) Exceptions to the Rules
-Existing Non-conformant Code Windows Code
+Existing Non-conformant Code
+Windows Code
+
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 1: C++ Version
 ----------------------------------------
-CHAPTER 1: C++ Version
-Definition The specific revision of the ISO C++ Standard used for the project.
+Definition The specific revision of the ISO C++ Standard required for the project and the policy for adopting newer features.
 
 Pros
 
-Predictability: Ensures all developers, CI/CD pipelines, and production environments use a consistent feature set.
+Predictability: Ensures consistent behavior across developer workstations, CI/CD pipelines, and production environments.
 
-Modernity: Allows the use of features like std::expected (C++23) or concepts (C++20) which significantly improve the safety of exception-based code.
+Safety & Expressiveness: Modern standards provide tools like Concepts and std::expected that replace error-prone preprocessor macros and complex template metaprogramming.
+
+Performance: Features like std::span and improved Move Semantics allow for zero-cost abstractions that are difficult to implement safely in older standards.
 
 Cons
 
-Toolchain Requirements: Newer standards may require upgrading compilers (GCC/Clang/MSVC) and build tools (CMake/Bazel), which can be a hurdle for legacy environments.
+Toolchain Dependency: Requires modern compilers (GCC 10+, Clang 12+, MSVC 19.29+). Older "Long Term Support" (LTS) server environments may require custom toolchain installations.
 
-Decision The project will use C++20 as the minimum baseline. Features from C++23 are encouraged where compiler support is verified across the team’s toolchains.
+Decision
 
-Rationale C++20 introduces Concepts and Coroutines, which are transformative for writing safe, expressive code. Specifically for our exception policy, C++20/23 features allow for more expressive template constraints, ensuring that generic code only accepts types with noexcept move constructors when performance is critical.
+Baseline: The project must use C++20. All code must compile under this standard without warnings.
+
+Optionality: Features from C++23 are permitted only when verified against the project's primary compilers.
+
+Verification: Use C++20 Feature-test macros (e.g., __cpp_lib_expected) to guard C++23 features if the codebase must remain portable to strictly C++20 environments.
+
+Rationale C++20 is the "New Baseline" for systems programming. Concepts allow us to enforce our exception-safety rules at compile-time (e.g., ensuring a type has a noexcept move constructor). Coroutines and Ranges allow for highly efficient asynchronous and data-processing code that remains readable. By anchoring at C++20, we gain the performance of C and Assembly with the safety of a modern managed language.
+
+Engineering Note: Avoid "Standard Chasing." Do not adopt a C++23 feature just because it exists. Only move beyond the C++20 baseline if the feature provides a measurable improvement in safety (like std::expected for error handling) or performance.
 
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 2: Header Files
 ----------------------------------------
 2.1. Self-contained Headers
-Definition A header file must have everything it needs to compile on its own. If you include it, you shouldn't have to include anything else first.
+Definition A header file must be capable of compiling in isolation.
 
-Pros
+Decision All headers must be self-contained. If a header uses std::vector, it must include <vector>.
 
-Reduced Fragility: Prevents "Order-of-Include" bugs where a file compiles in one place but fails in another.
+Prohibited: Relying on the "accidental" inclusion of a dependency by a previous header in the .cc file.
 
-Ease of Use: Simplifies the developer experience; include "logger.h" just works.
-
-Cons
-
-Potential for Bloat: May lead to including more than is strictly necessary if not managed carefully.
-
-Decision All header files must be self-contained. They must use #define guards and include all necessary dependencies for their own declarations.
-
-Rationale In a complex system, headers often act as the "API Contract." If a header is not self-contained, it implies a hidden dependency. For engineers working near the assembly/C level, this is critical: transparency in what is being pulled into the translation unit is paramount for managing binary size and compile times.
+Rationale Headers are the "API Contract." Non-self-contained headers create "Temporal Coupling" where the build breaks simply because someone reordered an include list. For systems-level work, this transparency is vital for understanding the true dependency graph of a module.
 
 2.2. The #define Guard
-Definition A preprocessor mechanism to prevent a header from being included multiple times in a single translation unit.
-
-Decision All headers will use #ifndef guards. While #pragma once is widely supported, the standard #ifndef guard remains the most portable and robust method across all toolchains.
+Decision Use standard #ifndef guards. Do not use #pragma once.
 
 Format: <PROJECT>_<PATH>_<FILE>_H_
 
-Example
+Example: MILLS_NETWORK_CORE_SOCKET_H_
 
-C++
+Rationale While #pragma once is common, it is not part of the C++ standard and can fail in complex build environments involving symbolic links or multiple mount points. Standard guards are universally robust and portable.
 
-#ifndef MILLS_CORE_NETWORK_SOCKET_H_
-#define MILLS_CORE_NETWORK_SOCKET_H_
+2.3. Include What You Use (IWYU)
+Definition If a .h or .cc file uses a symbol, it should explicitly include the header providing that symbol.
 
-// Header content...
+Decision Do not rely on transitive includes (e.g., including <iostream> just because it happens to include <iosfwd>).
 
-#endif  // MILLS_CORE_NETWORK_SOCKET_H_
-2.3. Forward Declarations
-Definition Declaring the existence of a type without providing its full definition.
+Rationale Transitive dependencies are unstable. A compiler update might change what <vector> includes internally, breaking your code if you weren't explicit. This is particularly important for Exception types (e.g., explicitly include <stdexcept>).
 
-Pros
+2.4. Forward Declarations
+Decision Avoid forward declarations. Use #include instead.
 
-Compile Speed: Reduces the "Include Web," potentially shaving minutes off large builds.
+Exceptions: Permitted only to break circular dependencies or when an included header is verified to add >1 second to the per-file compile time.
 
-Lower Coupling: Limits the number of files that need to be recompiled when a header changes.
+Rationale Forward declarations hide the dependency graph from the compiler. Crucially, they interact poorly with RAII: a std::unique_ptr<T> requires the full definition of T to generate the destructor code. Hiding the definition forces you to move the destructor to the .cc file, which is a "Design Tax" that often outweighs the compile-time benefit.
 
-Cons
+2.5. Defining Functions in Header Files
+Decision Only define functions in headers if:
 
-Exception Safety Obstacle: You cannot use a forward-declared type as a data member if it's managed by a std::unique_ptr unless the destructor is defined in the .cc file.
+They are Templates.
 
-Hidden Types: Makes it harder for tools (and humans) to find the actual definition.
+They are constexpr or consteval.
 
-Decision Avoid forward declarations where possible; use #include instead. Forward declarations should be reserved for breaking circular dependencies or extremely heavy headers that are known to bottleneck build times.
+They are small, high-performance accessors (usually 1-2 lines) marked inline.
 
-Rationale Google’s guide is very pro-forward-declaration to save compile time. However, in our guide, correctness and RAII safety take precedence. Forward declarations often interact poorly with smart pointers and templates. For a mid-tier engineer, the slight hit to compile time is a fair trade for the clarity of having the full type definition available.
+Rationale Defining complex logic in headers increases "Binary Bloat" and significantly slows down rebuilds, as any change to the logic requires recompiling every file that includes that header.
 
-2.4. Names and Order of Includes
-Definition The standard sequence for including headers in a .cc file.
+2.6. Names and Order of Includes
+Decision Use the following order, with a blank line between groups:
 
-Decision Use the following order to maximize the chance of catching "non-self-contained" header bugs:
+Related Header: (e.g., socket.cc starts with #include "socket.h")
 
-Related header (e.g., filesystem.cc includes filesystem.h).
+C System Headers: (e.g., <unistd.h>)
 
-C system headers (e.g., <unistd.h>, <fcntl.h>).
+C++ Standard Library: (e.g., <vector>)
 
-C++ standard library headers (e.g., <vector>, <exception>).
+Third-party Library Headers: (e.g., absl/strings/str_cat.h)
 
-Other libraries' .h files (e.g., absl/strings/str_cat.h).
+Project Headers: (e.g., "mills/core/util.h")
 
-Your project's .h files.
-
-Rationale By including the "Related Header" first, you ensure it is self-contained. If it relies on a hidden dependency from <vector>, the compiler will complain immediately because <vector> hasn't been included yet.
+Rationale Including the related header first is a "Self-Containment Test." If socket.h is missing a dependency, socket.cc will fail to compile immediately.
 
 Engineering Note on Chapter 2
-Engineering Note: When dealing with exception-throwing code, be wary of "Include What You Use" (IWYU) tools that might suggest removing a header that is required for an exception type. If you catch std::runtime_error, you must include <stdexcept>, even if you don't use any other functions from that header.
+Engineering Note: In an exception-enabled system, the "Cost of Inclusion" is not just compile time—it is binary size. Each function included in a header (especially templates) requires the compiler to generate exception-unwind tables in every translation unit where it is used. Keep headers lean to keep the "Sad Path" overhead manageable.
+
 
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 3: Scoping
 ----------------------------------------
+CHAPTER 3: Scoping
 3.1. Namespaces
-Definition Namespaces provide a method for preventing name conflicts in large projects and organizing code into logical groups.
-
-Pros
-
-Collision Avoidance: Prevents "Symbol Soup" where two different libraries define a Logger class.
-
-Organization: Clearly identifies the owner/module of a piece of code (e.g., mills::network::Socket).
-
-Cons
-
-Verbosity: Can lead to deeply nested code or repetitive prefixing.
+Definition A mechanism for logical grouping and symbol isolation.
 
 Decision
 
-All project code must be wrapped in a unique top-level namespace (e.g., mills).
+Top-Level: All project code must reside within the mills namespace.
 
-Never use using namespace std; or any other namespace in a header file.
+Nesting: Limit nesting to two levels deep (e.g., mills::network).
 
-Inline namespaces are permitted only for ABI versioning.
+Header Restrictions: Never use using directives (e.g., using namespace std;) in headers. In .cc files, using directives are permitted only for specific symbols or within a restricted function scope.
 
-Rationale For the assembly and C engineer, namespaces are essentially "mangled prefixes" that the compiler manages for you. They are essential for scale. However, "using" directives in headers pollute every file that includes that header, defeating the purpose of the namespace and creating silent name collisions that are difficult to debug.
+Inline Namespaces: Restricted to ABI versioning.
+
+Rationale For engineers transitioning from C, namespaces are effectively "compiler-managed prefixes." They are essential for preventing collisions in large binaries, but "using" directives in headers pollute the global namespace of every file that includes them, re-introducing the "Symbol Soup" we are trying to avoid.
 
 3.2. Internal Linkage (Anonymous Namespaces and Static)
-Definition Restricting the scope of a symbol to the single translation unit (.cc file) in which it is defined.
+Decision
 
-Decision When definitions in a .cc file do not need to be referenced outside that file, give them internal linkage by using an anonymous namespace or marking them static. Anonymous namespaces are preferred for types; static is acceptable for functions and variables.
+Use Anonymous Namespaces in .cc files for types and utility functions that do not need to be visible to other translation units.
 
-Rationale This reduces the symbol table size and prevents the "One Definition Rule" (ODR) violations. It also allows the compiler to optimize more aggressively because it knows the symbol cannot be accessed from other units.
+Mark variables and constants in .cc files as static or const to ensure internal linkage.
 
-3.3. Local Variables
-Definition Variables declared within a function or block scope.
+Rationale This keeps the global symbol table lean, speeds up the linker, and prevents "One Definition Rule" (ODR) violations. It also signals to the reader that the code is a "private helper" for that specific file.
 
-Decision Place a function's variables in the narrowest scope possible, and initialize variables in the declaration.
+3.3. Nonmember, Static Member, and Global Functions
+Decision
 
-Rationale In an exception-safe codebase, the narrower the scope, the better. When an exception is thrown, only objects that have been fully constructed in the current scope will have their destructors called. By delaying a variable's declaration until you have the data to initialize it, you ensure that you never have "half-initialized" local variables sitting on the stack during an unwind.
+Prefer nonmember functions within a namespace over static member functions of a class when the function doesn't need access to private class data.
 
-3.4. Static and Global Variables
-Definition Variables with a lifetime that lasts for the duration of the program (static storage duration).
+Global functions (outside a namespace) are strictly forbidden.
 
-Pros
+Rationale Placing functions outside of a class reduces "Class Bloat" and header coupling. It makes the code easier to test and more resilient to changes in class internals.
 
-Shared State: Useful for truly global constants or "once-per-run" configuration.
+3.4. Local Variables
+Decision Declare variables in the narrowest scope possible and initialize them immediately.
 
-Cons
+Rationale In an exception-safe codebase, stack unwinding only cleans up objects that have successfully finished their constructors. By delaying a declaration until you have the data to initialize it, you ensure you never have "uninitialized" or "half-baked" objects sitting on the stack if an exception is thrown.
 
-Non-Deterministic Order: The order of initialization between different .cc files is undefined.
-
-Exception Danger: If a global variable's constructor throws an exception, the program calls std::terminate() immediately. There is no try/catch block around the program's entry point that can catch a global constructor failure.
+3.5. Static and Global Variables
+Definition Variables with static storage duration.
 
 Decision
 
-Forbidden: Class-type objects with non-trivial constructors/destructors are forbidden as global variables.
+Forbidden: Objects with non-trivial constructors (those that allocate memory, open files, or take locks) cannot be global or static.
 
-Permitted: Primitive types (PODs), pointers, and constexpr variables are allowed.
+Permitted: Primitive types (PODs), pointers, and constexpr variables.
 
-If you need a global object, use a function-local static (the "Meyers Singleton" pattern).
+The Singleton Pattern: If a global-scope object is required, use a function-local static (The Meyers Singleton).
 
-Rationale Global constructors are a "dark corner" of C++. Because they run before main(), any exception thrown is uncatchable. By using a function-local static, the object is initialized only the first time the function is called (thread-safe since C++11), and failures occur at a predictable point in your logic where they can be caught.
+Rationale The Static Initialization Order Fiasco means the order in which globals across different files are created is undefined. More dangerously, if a global constructor throws an exception, the program calls std::terminate() immediately because there is no try/catch block around the program's entry point.
 
-Engineering Note: A crash during global initialization is a fundamental architectural fault. It leaves no stack trace in many environments and no log entry. If you must have global-like state, use the "Leaky Singleton" or function-local static to ensure you are within the main() execution context when construction occurs.
+3.6. thread_local Variables
+Decision Use thread_local only for truly thread-specific data (e.g., per-thread error contexts or random number seeds).
 
-Example
+Rationale Similar to globals, thread_local constructors can throw. If this happens during thread creation (e.g., inside std::thread), it may be uncatchable depending on the platform. Furthermore, ensure thread_local destructors are noexcept, as they execute during thread termination where exception handling is extremely limited.
 
-C++
-
-// BAD: If this constructor throws, the app dies before main() starts.
-DatabaseConnection g_db_connection("localhost"); 
-
-// GOOD: Initialization happens inside a catchable context.
-DatabaseConnection& GetDatabase() {
-  static DatabaseConnection* db = new DatabaseConnection("localhost");
-  return *db;
-}
-3.5. thread_local Variables
-Definition Variables where each thread has its own independent instance.
-
-Decision Use thread_local only for data that is truly thread-specific (like error buffers or random number generators). Avoid thread_local for heavy objects.
-
-Rationale Like globals, thread_local constructors can throw. If they throw during thread creation, it may be impossible to catch depending on how the thread was spawned. Use with extreme caution.
+Engineering Note on Chapter 3
+Engineering Note: A crash during global initialization is a "Silent Killer." It often occurs before the logger is initialized, leaving you with a program that simply vanishes. If you must have global-like state, use the "Leaky Singleton" (storing a pointer to a heap-allocated object that is never deleted) to ensure you are safely inside the main() execution context when the object is created.
 
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 4: Classes
 ----------------------------------------
 4.1. Doing Work in Constructors
-Definition Constructors should perform the initialization required to establish the class invariant. We allow constructors to perform operations that might fail (e.g., file I/O, memory allocation).
+Decision Constructors must establish the class invariant. If initialization fails (e.g., memory allocation, resource acquisition), the constructor must throw an exception.
 
-Pros
+Prohibited: "Zombie objects" that require a secondary IsValid() or Init() call.
 
-Invariant Integrity: Ensures an object is fully functional the moment it is created.
+Rationale Two-stage initialization creates "Temporal Coupling"—the risk of calling methods on an uninitialized object. By throwing, we ensure that any named object in a scope is fully functional.
 
-Syntax Clarity: Allows for direct initialization (Stack s;) instead of manual two-stage setup (Stack s; s.Init();).
+Engineering Note: If a constructor throws, the object’s destructor is not called. However, sub-objects (members) that were already fully constructed are destroyed. Use RAII members (like std::unique_ptr) to ensure no leaks occur during a constructor failure.
 
-Cons
+4.2. Implicit Conversions
+Decision All single-argument constructors and conversion operators must be marked explicit.
 
-Error Propagation: Failure requires throwing an exception, which must be handled or propagated.
+Rationale This prevents the compiler from creating "hidden" temporary objects. In systems-level code, a hidden temporary can lead to unexpected performance hits or, worse, a temporary being created and destroyed during an exception unwind, masking the original error.
 
-Cleanup Complexity: If a constructor throws, the object's own destructor is not called. Only sub-objects already constructed will be cleaned up.
+4.3. Copyable and Movable Types
+Decision * Rule of Three/Five/Zero: If you define a destructor, you must likely define or delete the copy/move constructors and assignment operators.
 
-Decision Constructors will perform all work necessary to reach a valid state. If a constructor cannot satisfy its contract, it must throw an exception. We explicitly forbid "zombie objects" that require a secondary IsValid() check.
+Prohibited: Implicitly allowing copies of classes that own unique resources (e.g., file descriptors, sockets). Mark these = delete.
 
-Rationale "Two-Stage Initialization" is an anti-pattern that leads to "Temporal Coupling"—where a user must remember to call Init() before DoWork(). We use the compiler to enforce that an invalid object can never technically exist.
+Requirement: Move constructors and move assignment operators must be marked noexcept.
 
-Engineering Note: If a constructor fails frequently due to "expected" issues (e.g., a file not existing), consider a Static Factory Method that returns std::optional or absl::StatusOr. Reserve throwing constructors for cases where failure represents a violation of the expected environment or contract.
+Rationale Standard containers (like std::vector) will only use move operations if they are guaranteed not to throw. If they aren't noexcept, the container will perform a slow copy to maintain exception safety.
 
-4.2. Destructors and noexcept
-Definition The destructor is responsible for the deterministic release of resources.
+4.4. Structs vs. Classes
+Decision Use a struct only for passive data (PODs). If a type has an invariant, private data, or virtual functions, use a class.
 
-Decision Destructors must never throw an exception. They must be implicitly or explicitly marked noexcept.
+4.5. Structs vs. Pairs and Tuples
+Decision Prefer a named struct over std::pair or std::tuple whenever the elements have distinct meanings.
 
-Pros * Ensures safe stack unwinding and prevents immediate program termination via std::terminate.
+Rationale struct.status is significantly more readable and maintainable than std::get<0>(tuple). This clarity is vital when examining state inside a catch block.
 
-Cons * Failures during cleanup must be handled internally (e.g., logged and suppressed) and cannot be reported to the caller.
-
-Rationale C++ cannot handle a second exception being thrown while it is already processing one during stack unwinding. Destructors are the "cleanup crew"; they must finish their job without causing further panic.
-
-4.3. Move Constructors and Assignment
-Definition Move semantics allow resources owned by an rvalue to be "moved" into a new object rather than copied.
-
-Pros
-
-Performance: Enables "cheap" transfers of heavy objects (like std::vector) without heap allocations.
-
-Move-Only Types: Essential for types like std::unique_ptr.
-
-Cons
-
-Implementation Burden: Requires careful manual implementation (or = default) to ensure a valid empty state for the source.
-
-The "Copy-Fallback" Tax: If not marked noexcept, standard containers will perform a slow copy instead of a move to maintain safety.
-
-Decision Move constructors and move assignment operators will be marked noexcept unless extraordinary architectural conditions prevent it.
-
-Rationale A move is a transfer of existing ownership. Marking these noexcept is a hint to the STL that it is safe to optimize.
-
-Engineering Note: If a move operation throws, it is often a sign of poor design or a fundamental architectural fault. A move should be a simple pointer swap. If your move requires an allocation that could fail, investigate the design immediately.
-
-
-4.4. Inheritance
-Definition Inheritance allows a class to be defined in terms of another class, providing a way to create a hierarchy of types.
-
-Pros
-
-Polymorphism: Allows for code that operates on an interface rather than a concrete implementation.
-
-Code Reuse: Shared logic can be moved to a base class.
-
-Cons
-
-Object Slicing: Occurs when a derived object is passed by value as a base object, losing its derived data.
-
-Memory Corruption: If a base class is deleted via a pointer and does not have a virtual destructor, derived members are not cleaned up.
-
+4.6. Inheritance
 Decision
 
-Virtual Destructors: Any class with a virtual function must have a virtual destructor. This is non-negotiable in an exception-based system to ensure cleanup during unwinding.
+Virtual Destructors: Any base class with virtual functions must have a virtual destructor.
 
-Composition over Inheritance: Prefer composition whenever possible. Use inheritance only when an "is-a" relationship is clearly defined.
+Modern Syntax: Use override on all overridden virtual functions; use final only when a class is explicitly designed to be the end of a hierarchy.
 
-override and final: Use the override keyword on all overridden virtual functions to catch signature mismatches at compile time.
+Composition: Prefer composition over inheritance unless a clear "is-a" relationship exists.
 
-Rationale In a codebase using exceptions, an object might be destroyed at any time. If you are holding a pointer to a base class and an exception triggers its destruction, the compiler must be able to find the derived destructor to prevent a memory leak or a partial destruction state.
+Rationale Failure to provide a virtual destructor leads to undefined behavior during destruction. In an exception-rich environment where objects are frequently destroyed during unwinding, this is a critical safety requirement.
 
-4.5. Implicit Conversions
-Definition The compiler's ability to automatically convert one type to another (e.g., passing an int to a function expecting a MyClass object via a single-argument constructor).
-
-Pros
-
-Convenience: Reduces the need for explicit casting or wrapping.
-
-Cons
-
-Hidden Bugs: Can lead to unexpected temporary objects being created and destroyed, which can hide performance issues or call the wrong function overload.
-
+4.7. Operator Overloading
 Decision
 
-All single-argument constructors must be marked explicit.
+Overload operators only when their meaning is mathematically or logically intuitive.
 
-Conversion operators (operator bool(), etc.) must be marked explicit.
+Assignment (operator=): Must provide the Strong Exception Guarantee. Use the Copy-and-Swap idiom: create a local copy, then swap its guts with this.
 
-Rationale "Magic" type conversions are dangerous for engineers debugging at the assembly/C level. Marking these as explicit forces the developer to acknowledge the conversion, making the intent clear and preventing the compiler from making assumptions that might result in a "surprise" exception from a temporary object you didn't know existed.
+Rationale If an assignment operator modifies part of an object and then throws, the object is left in a "half-mutated" corrupted state. Copy-and-Swap ensures that the object remains unchanged if an error occurs during the copy.
 
-4.6. Operator Overloading
-Definition Giving standard C++ operators (like +, ==, or []) custom logic for your classes.
-
-Pros
-
-Natural Syntax: Allows objects to behave like primitive types (e.g., vecA + vecB).
-
-Cons
-
-Implicit Complexity: A simple + can hide a massive allocation or a complex algorithm that might throw an exception.
-
-Unintuitive Behavior: Overloading operators in ways that don't match their mathematical meaning (e.g., using << for something other than bit-shifting or streaming) confuses the reader.
-
+4.8. Access Control and Declaration Order
 Decision
 
-Overload operators only when their meaning is obvious and matches built-in behavior.
+Access: Data members must be private.
 
-Exception Safety: Operators should provide the Strong Exception Guarantee whenever possible. If an addition fails, neither operand should be modified.
+Order: Group members by access level in this order: public:, protected:, private:. Within each group, follow this layout:
 
-Assignment Operators: operator= should be exception-safe. Use the "Copy-and-Swap" idiom to ensure that if an allocation fails during assignment, the original object remains untouched.
+Types/Enums
 
-Rationale Operators are often used in contexts where the reader does not expect failure. If an operator throws, it must do so without leaving the operands in a "half-mutated" state.
+Constants
 
-Engineering Note: A throwing operator= that leaves an object in a corrupted state is a fundamental architectural fault. It makes it impossible to write transactional code. Always perform risky operations (like memory allocation) on a temporary object before swapping it into the final destination.
+Constructors/Destructor
 
-4.7. Access Control
-Definition The use of public, protected, and private keywords.
+Methods
 
-Decision
+Data Members
 
-Data members must be private. Use "Getters" and "Setters" if access is needed.
-
-Use protected sparingly; it often indicates a design that could be better handled via composition or a public interface.
-
-Rationale Encapsulation is the only way to protect the class invariant. If an exception is thrown, we need to know that the internal state of the object was only modified through controlled paths, making it easier to reason about the object's validity after a "catch" block.
+Rationale This standardizes the "Class Interface" so that an engineer can find the public API at the very top of the file without wading through implementation details.
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 5: Functions
 ----------------------------------------
 5.1. Inputs and Outputs
-Definition The strategy for passing data into and receiving data out of functions.
-
-Pros
-
-Performance: Passing by reference avoids expensive copies of large objects.
-
-Clarity: Clear distinction between data that is merely "read" and data that is "modified."
-
-Cons
-
-Implicit Modification: References can sometimes hide the fact that an input is being changed by the function.
-
-Lifetime Risks: Passing by reference or pointer requires the caller to ensure the object outlives the function call.
-
 Decision
 
-Input-only parameters: Pass by const reference for class types (e.g., const std::string&). Pass by value for small, cheap-to-copy types (ints, doubles, small PODs).
+Inputs: * Pass by value for cheap types (integers, floats, std::string_view, std::span).
 
-Output/In-Out parameters: Use pointers (e.g., int* out_count). This makes the "modifiability" visible at the call site because the caller must use the & operator.
+Pass by const T& for expensive types (strings, vectors, large structs).
 
-Return Values: Prefer returning by value. Modern compilers use Return Value Optimization (RVO) and Move Semantics to make this nearly free. If a function can fail, return std::optional<T> or throw an exception as per our Chapter 7 guidelines.
+Outputs: * Prefer Return by Value. Modern compilers use Return Value Optimization (RVO) and Move Semantics to eliminate copying.
 
-Rationale Google’s requirement for pointers for out-parameters is a "safety at the call site" rule that we will keep. By seeing UpdateStatus(&my_status), the engineer immediately knows my_status may change. This is especially helpful when tracing an exception back up the stack—you can visually identify which variables might have been mutated before the "throw" occurred.
+Use Pointers (T* out) for mandatory out-parameters or when the caller must explicitly acknowledge the modification by using the & operator.
 
-5.2. Function Overloading
-Definition Defining multiple functions with the same name but different parameter lists.
+Prohibited: Using non-const references (T& out) for output parameters.
 
-Pros
+Rationale The "Pointers for Out-Parameters" rule is a vital safety signal at the call site. In an exception-heavy codebase, seeing UpdateState(&my_obj) alerts the engineer that my_obj is in a "mutable danger zone" before an exception might trigger stack unwinding.
 
-Consistency: Allows the same logical operation (e.g., Print()) to work on different types.
+5.2. Write Short Functions
+Decision Functions should be small, focused, and perform a single task.
 
-Cons
+Aim for functions that fit on one screen (approx. 40 lines).
 
-Call-Site Ambiguity: Complex overloading rules can make it difficult to determine which version of a function is being called, especially with implicit conversions.
+If a function has more than 3-4 parameters, consider grouping them into a struct.
 
-Decision
+Rationale Long functions are difficult to make "Strongly Exception Safe." The more state a function touches, the harder it is to ensure that all changes are rolled back if a throw occurs on line 50. Small functions promote "atomic" operations.
 
-Use overloading only when the functions perform the same logical task on different types.
+5.3. Function Overloading
+Decision Overload only when the functions perform the same logical operation on different types.
 
-Avoid "Hiding": Do not overload across base and derived classes in a way that hides base functions.
+Avoid Hiding: Do not define overloads in a derived class that hide overloads in the base class.
 
-Avoid Ambiguity: Ensure that overloads are distinct enough that a reader (and the compiler) doesn't need to consult the ISO spec to know which one is chosen.
+Ambiguity: Ensure overloads are distinct enough that the compiler doesn't rely on complex implicit conversion rules to pick one.
 
-Rationale Overloading should simplify the API, not turn it into a puzzle. For the assembly/C engineer, overloading is just name-mangling; we want to ensure that mangling is predictable and intentional.
+5.4. Default Arguments
+Decision * Forbidden on Virtual Functions.
 
-5.3. Default Arguments
-Definition Specifying a value in the function signature that is used if the caller omits that argument.
+Permitted on non-virtual functions where they reduce boilerplate more effectively than an overload.
 
-Pros
+Rationale Default arguments are statically bound. If a virtual function is called through a base pointer, the default argument used is from the Base class, even if the Derived implementation is executed. This is a "Fundamental Architectural Fault" that leads to silent, non-throwing logic errors.
 
-Brevity: Reduces boilerplate for common use cases.
+5.5. Trailing Return Type Syntax
+Decision Use the auto Func() -> ReturnType syntax only when:
 
-Cons
+Writing Lambdas.
 
-Hidden Logic: Can make it unclear what values are actually being used at the call site.
+Writing Templates where the return type is dependent on template parameters (e.g., decltype).
 
-Virtual Function Risks: Default arguments are statically bound, which creates confusing behavior when used with virtual functions.
+It significantly improves readability of complex return types (like function pointers).
 
-Decision
-
-Forbidden on Virtual Functions: Never use default arguments on virtual methods.
-
-Preferred over Overloading: If the logic is identical except for one optional parameter, use a default argument instead of creating a second overload.
-
-Rationale Default arguments on virtual functions are a notorious C++ "gotcha": the function called is determined by the dynamic type, but the default argument is determined by the static type. This leads to objects behaving differently depending on whether they are accessed via a base or derived pointer—a fundamental architectural fault.
-
-5.4. Trailing Return Type Syntax
-Definition The auto FunctionName() -> ReturnType syntax introduced in C++11.
-
-Pros
-
-Lambda Consistency: Matches the syntax used for lambdas.
-
-Template Clarity: Essential for certain template functions where the return type depends on the arguments (e.g., using decltype).
-
-Decision
-
-Use trailing return types only when necessary (e.g., in complex templates or when it significantly improves readability).
-
-Otherwise, stick to the traditional ReturnType FunctionName() format for standard code.
-
-Rationale While trailing return types are "modern," they can be jarring to engineers coming from a C/Assembly background. We use them as a tool for solving specific template problems, not as a blanket stylistic mandate.
+Rationale Traditional return-type syntax is the standard for the majority of the codebase to maintain familiarity for engineers with a C/Assembly background.
 
 Engineering Note on Chapter 5
-Engineering Note: In an exception-enabled codebase, the "Output Parameter via Pointer" rule serves a dual purpose. It forces the developer to consider the Strong Exception Guarantee. If you are modifying an out-parameter pointer, ensure you do not commit changes to that memory until all code that could possibly throw has successfully completed. Never leave an out-parameter in a partially-modified state.
+Engineering Note: To satisfy the Strong Exception Guarantee, follow the "Commit at the End" pattern. Perform all risky work (allocations, parsing, calculations) in local variables first. Only after you are certain no more exceptions will be thrown should you modify the out-parameter pointer or class member. Never leave an object in a "half-changed" state.
 
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 6: Mills-Specific Magic (Modified Google version)
 ----------------------------------------
 6.1. Ownership and RAII
-Definition Resource Acquisition Is Initialization (RAII).
+Definition Resource Acquisition Is Initialization (RAII) ensures that the lifetime of a resource is tied to the lifetime of a stack-based object.
 
-Decision Every resource (memory, file handles, mutexes) must be wrapped in a manager object. Manual new and delete are forbidden.
+Decision
 
-Rationale In a codebase with exceptions, RAII is the only way to prevent leaks. Stack unwinding only works if destructors handle the cleanup.
+Mandatory RAII: Every resource (heap memory, file descriptors, mutexes, sockets) must be managed by a dedicated object whose destructor handles the release.
+
+Prohibited: Manual new and delete. Manual malloc and free.
+
+Rationale In an exception-enabled codebase, you cannot predict the exit point of a function. RAII is the only mechanism that guarantees cleanup during stack unwinding.
+
+6.2. Smart Pointers
+Decision
+
+std::unique_ptr: The default choice for heap ownership. It has zero runtime overhead compared to a raw pointer.
+
+std::shared_ptr: Permitted only when true shared ownership is required (e.g., a resource shared across multiple threads where no single thread is the "parent").
+
+Allocation: Always use std::make_unique<T>() and std::make_shared<T>().
+
+Prohibited: std::unique_ptr<T>(new T()).
+
+Rationale std::make_unique is not just about brevity; it is an exception-safety requirement. In expressions like Func(unique_ptr<T>(new T()), ThrowingFunc()), C++ does not guarantee the order of evaluation. If new T() happens first and ThrowingFunc() throws before the unique_ptr is constructed, you have a memory leak. make_unique fixes this atomicity.
+
+6.3. Raw Pointers and References
+Decision
+
+Raw Pointers: Use only for observation, never for ownership. A raw pointer should never be deleted.
+
+Optionality: If a pointer can be null, use a raw pointer. If it must not be null, use a Reference.
+
+Rationale This creates a clear visual distinction. If an engineer sees a unique_ptr, they know they are responsible for the object's life. If they see a raw pointer T*, they know they are just looking at something that someone else is managing.
+
+6.4. Automated Tooling (Clang-Tidy)
+Decision Use Clang-Tidy for static analysis instead of the legacy cpplint.
+
+Requirement: All code must pass the bugprone-*, performance-*, and cppcoreguidelines-* checks.
+
+Exceptions: Specifically use the clang-analyzer-cplusplus.Move check to catch "Use-after-move" bugs.
+
+Rationale Human reviewers are poor at catching subtle exception-safety leaks or use-after-move faults. We rely on the LLVM toolchain to enforce the "Mechanical" parts of this style guide.
+
+Engineering Note on Chapter 6
+Engineering Note: Avoid "Smart Pointer Bloat." Just because we use unique_ptr doesn't mean everything should be on the heap. Prefer the stack. Stack-allocated objects are faster, have better cache locality, and are inherently exception-safe without the overhead of an allocator call.
+
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 7: Other C++ Features
 ----------------------------------------
-7.1. Exceptions
-Definition A mechanism for signaling errors that allows the program to transfer control to a handler elsewhere in the call stack.
+7.1. Exceptions (The Policy)
+Decision Exceptions are for exceptional cases (contract violations, resource exhaustion).
 
-Decision Exceptions are permitted and encouraged for truly exceptional circumstances where a function cannot fulfill its contract.
+Throw by value, catch by const reference.
 
-1. When to Throw
+Guarantees: Every function must at least provide the Basic Guarantee (no leaks).
 
-Contract Violations: Precondition/postcondition failures.
+7.2. noexcept
+Decision Use noexcept liberally on:
 
-Constructor Failures: Inability to establish an invariant.
+Move constructors and move assignment operators.
 
-Operator Overloads: Errors where a return value cannot indicate failure (e.g., operator[]).
+Destructors.
 
-2. When to use Return Codes
+Leaf-node utility functions that cannot fail.
 
-Expected Failures: Use std::optional or Status for normal flow (e.g., UserNotFound).
+Rationale This allows the compiler to omit exception-handling tables and permits STL containers to optimize moves.
 
-High-Performance Loops: Avoid the overhead of stack unwinding in tight loops.
+7.3. Rvalue References (&&) and Friends
+Decision * Use Rvalue References only for move semantics or "sink" parameters.
 
-3. Safety Levels
+Friends: Permitted only within the same file/module to allow a unit test or a "Factory" class to access private constructors.
 
-All code must provide the Basic Exception Guarantee (no leaks).
-
-Critical components should strive for the Strong Exception Guarantee (transactional).
-
-7.2. Run-Time Type Information (RTTI)
-Decision RTTI is generally restricted. However, dynamic_cast and typeid are permitted specifically for exception handling hierarchies to allow for granular error recovery.
-
-7.3. 0 and nullptr/NULL
-Decision * Use nullptr for all pointer values.
-
-Use '\0' for the null character literal.
-
-Use 0 only for numerical integer values.
-
-Rationale Prevents ambiguity in function overloading (e.g., f(int) vs f(void*)).
-
-7.4. Standard Library (STL)
-Decision The STL is fully permitted, including features that throw.
-
-Container Access: .at() is preferred when bounds checking is required.
-
-Streams: Permitted, though std::format or absl::PrintF are preferred for performance.
-
-Engineering Note: The STL is not a license for sloppiness. If an STL feature (like <regex>) is known for performance cliffs, it must be flagged for architectural review.
-
-7.5. Casting
-Definition The mechanism for explicitly converting an object from one type to another.
-
-Pros
-
-Necessity: Essential when dealing with legacy C APIs or polymorphic hierarchies.
-
-Clarity: C++-style casts (static_cast, etc.) are searchable in codebases, unlike C-style casts (int)x.
-
-Cons
-
-Safety Risk: Casting can bypass the type system, leading to undefined behavior if done incorrectly.
-
+7.4. Type Deduction (auto and CTAD)
 Decision
 
-Forbidden: Never use C-style casts (type)value or functional-style casts type(value).
+auto: Use only when the type is obvious from the right-hand side (e.g., auto x = std::make_unique<T>();) or for complex iterators.
 
-Standard Casts: Use static_cast for safe, well-defined conversions. Use reinterpret_cast only for low-level bit-casting (common in assembly/hardware interfacing).
+CTAD: (Class Template Argument Deduction) is permitted for simple types like std::lock_guard lock(mutex);.
 
-Dynamic Cast: As established, dynamic_cast is permitted only for navigating exception hierarchies or verified polymorphic types.
-
-Rationale C-style casts are a "sledgehammer" that can perform a static_cast, a const_cast, and a reinterpret_cast simultaneously without telling you which one it chose. For a mid-tier engineer, the verbosity of static_cast is a feature, not a bug—it signals exactly what kind of type transformation is occurring.
-
-7.6. Lambda Expressions
-Definition Anonymous function objects capable of capturing variables from the surrounding scope.
-
-Pros
-
-Brevity: Allows for small, localized logic (especially for STL algorithms) without cluttering the namespace.
-
-Readability: Keeps the logic close to where it is used.
-
-Cons
-
-Capture Risks: Capturing by reference ([&]) in a lambda that outlives the current scope is a guaranteed "use-after-free" bug.
-
-Complexity: Large lambdas become difficult to read and debug.
-
+7.5. Use of const, constexpr, constinit, and consteval
 Decision
 
-Keep them short: If a lambda exceeds 5 lines, consider making it a named function.
+const: Mandatory for all non-mutated variables.
 
-Explicit Captures: Avoid [=] or [&]. Always explicitly list the variables you are capturing (e.g., [ptr, &count]).
+constexpr: Use for any function or value that can be computed at compile time.
 
-Exception Specification: If a lambda cannot throw, mark it noexcept.
+consteval: Use for functions that must be computed at compile time.
 
-Rationale Lambdas are powerful but dangerous. Explicit captures force the engineer to think about the lifetime of the captured variables. This is especially critical when an exception is thrown; we need to be certain that captured references are still valid during the stack unwind.
+constinit: Use for globals to prevent the "Static Initialization Order Fiasco."
 
-7.7. Use of const
-Definition A qualifier that prevents a variable or member function from being modified.
-
-Pros
-
-Compiler Optimization: Allows the compiler to make assumptions about data stability.
-
-Thread Safety: const objects are inherently thread-safe for concurrent reads.
-
-Documentation: Tells the reader (and the compiler) that this value is an "input" only.
-
+7.6. Integer and Floating-Point Types
 Decision
 
-"Const Everything": Use const by default for all variables that are not intended to be modified.
+Integers: Use <cstdint> types (int32_t, uint64_t). Avoid unsigned for arithmetic; use it only for bit-masks.
 
-Const Member Functions: Mark all member functions const unless they explicitly modify the object's observable state.
+Floating-Point: Use double by default. Use float only for massive arrays or hardware-accelerated graphics where memory bandwidth is the bottleneck.
 
-Rationale In an exception-safe system, const is your best friend. It significantly reduces the "state space" you have to worry about when a function fails. If an object is const, you know for a fact its state didn't change before the exception was thrown, satisfying the Strong Exception Guarantee by default.
+7.7. Lambda Expressions
+Decision
 
-7.8. Preincrement and Predecrement
-Decision Use prefix forms (++i, --i) unless the postfix form (i++) is explicitly required by the logic.
+Length: Max 5 lines.
 
-Rationale For simple integers, it doesn't matter. But for iterators (common in the STL), postfix increment creates a temporary copy of the iterator to return the "old" value. In an exception-enabled codebase, creating unnecessary temporaries is a performance tax we should avoid.
+Captures: Always be explicit. Prohibited: [=] and [&].
+
+Rationale: Explicit captures (e.g., [ptr, &count]) make it clear if a variable will survive the stack unwind if an exception is thrown.
+
+7.8. Template Metaprogramming, Concepts, and Constraints
+Decision
+
+Concepts (C++20): Mandatory for all new template code. Replace std::enable_if and SFINAE with requires clauses.
+
+Complexity: Keep templates simple. If a template requires more than two levels of recursion, it must be flagged for architectural review.
+
+7.9. C++20 Modules and Coroutines
+Decision
+
+Modules: Prohibited for now. Stick to #include guards until toolchain support (compilers/IDEs) matures across all platforms.
+
+Coroutines: Permitted only for high-performance asynchronous I/O. They must be wrapped in a "Task" or "Future" type that is exception-safe.
+
+7.10. Designated Initializers (C++20)
+Decision Encouraged for POD structs.
+
+Example: Window w{.width = 800, .height = 600};
+
+Rationale: Prevents "Parameter Scrambling" errors where two adjacent integers are swapped.
+
+7.11. Streams and Formatting
+Decision
+
+Avoid <iostream> in performance-critical code.
+
+Use std::format (C++20) or std::print (C++23) for logging and string construction.
+
+7.12. Switch Statements
+Decision
+
+Always include a default case unless switching over a complete enum class.
+
+Use [[fallthrough]] explicitly for intentional fallthrough.
 
 Engineering Note on Chapter 7
-Engineering Note: When using reinterpret_cast for hardware or assembly interfacing, you are stepping outside the safety net of the C++ type system. Exceptions thrown across a reinterpret_cast boundary (e.g., from a callback) can lead to unrecoverable state corruption. Ensure that any C-style callback interfaces are marked extern "C" and have a "top-level" try/catch(...) to prevent exceptions from escaping into layers that cannot handle them.
-
-CHAPTER 7: Other C++ Features (Cleanup)
-7.9. Integer Types
-Definition The use of built-in integer types (int, long, size_t, etc.).
-
-Pros
-
-Standardization: Using fixed-width types ensures the code behaves identically on 32-bit and 64-bit architectures.
-
-Cons
-
-Overflow/Underflow: Silent wrapping of integers can lead to critical security vulnerabilities or logic errors that are difficult to catch with exceptions.
-
-Decision
-
-Fixed-width types: Use <cstdint> types (int32_t, uint64_t) for all data where the size matters (e.g., file formats, network protocols, or hardware registers).
-
-int: Use int only for small, general-purpose loop counters or indices where the value is guaranteed to stay within a 16-bit range.
-
-Unsigned Integers: Avoid unsigned integers for arithmetic unless you are performing bitwise operations. Use them only for quantities that are inherently non-negative, but be wary of subtraction (which can wrap to a massive positive value).
-
-Rationale For engineers working near the assembly layer, "size matters." Using int is ambiguous because its size can change between platforms. Fixed-width types provide the predictability needed for low-level systems.
-
-7.10. Preprocessor Macros
-Definition Code that is processed by the preprocessor before actual compilation (e.g., #define).
-
-Pros
-
-Global Configuration: Useful for feature flags or platform-specific switches.
-
-Cons
-
-Scope-blind: Macros do not respect namespaces or classes; they can accidentally replace code they weren't meant to touch.
-
-Non-debuggable: You cannot step into a macro with a debugger.
-
-Exception Hostile: Macros can hide multiple statements, making it impossible to determine which line inside a macro threw an exception.
-
-Decision
-
-Avoid Macros: Use const, constexpr, or inline functions instead of #define whenever possible.
-
-If required: Use a unique prefix (e.g., MILLS_) and ALL_CAPS naming. Use the do { ... } while (0) idiom for multi-statement macros to ensure they behave like single statements.
-
-Rationale Macros are a "legacy" tool that should be used sparingly in Modern C++. By using constexpr, you get the same performance benefits as a macro but with the full protection of the C++ type system and exception-handling visibility.
-
-7.11. Type Deduction (auto)
-Definition Allowing the compiler to deduce the type of a variable from its initializer.
-
-Pros
-
-Brevity: Avoids long, repetitive type names (especially with iterators or template types).
-
-Refactoring Ease: If a function's return type changes, the auto variable updates automatically.
-
-Cons
-
-Obfuscation: It can be hard for a human reader to know what the type actually is without IDE assistance.
-
-Decision
-
-Use auto only when it improves readability. This usually means:
-
-For iterators and template-heavy types.
-
-When the type is explicitly mentioned in the same line (e.g., auto logger = std::make_unique<Logger>();).
-
-Avoid auto for primitive types (ints, bools) where the type name is already short and clear.
-
-Rationale We want the code to be scannable. If an engineer has to hover their mouse over every variable just to find out if it’s a pointer or an object, we’ve failed at clarity.
-
-7.12. constexpr and constinit
-Definition Keywords that ensure values or functions are evaluated at compile-time.
-
-Decision Use constexpr for all constants and functions that can be computed at compile-time. Use constinit for global/static variables that must be initialized at compile-time to avoid the "Static Initialization Order Fiasco."
-
-Rationale Everything done at compile-time is work that doesn't need to be done at runtime. Furthermore, constexpr functions cannot throw exceptions that propagate to runtime; if a constexpr evaluation fails, it is a compile-time error. This is the ultimate "Zero-Cost" safety mechanism.
-
-Engineering Note on Chapter 7
-Engineering Note: When using fixed-width integers for hardware offsets or buffer sizes, remember that C++ exceptions do not catch integer overflows. If you are calculating a buffer size that might overflow, you must check the bounds manually and throw an std::overflow_error. Implicit wrapping is a silent killer in systems-level C++.
+Engineering Note: In a system using Coroutines, an exception thrown inside a co_await can be difficult to trace. Ensure your coroutine "Promises" have a unhandled_exception() implementation that logs the error before the state machine terminates. Never let an exception escape a coroutine silently.
 
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 8: Inclusive Language
 ----------------------------------------
-Definition The practice of using language that is professional, neutral, and avoids jargon or metaphors that are exclusionary or rooted in historical bias.
+Definition The practice of using professional, neutral, and technically precise language that avoids exclusionary jargon or historical bias.
 
 Decision
+- Variable & Function Naming: Inclusive language must be applied to the code itself, not just the comments.
+- Gender Neutrality: Use gender-neutral pronouns (they/them/their) in all documentation and comments.
+- Cultural Idioms: Avoid localized metaphors (e.g., "sanity check," "grandfathered in," "low-hanging fruit"). Use literal descriptions instead. 
+- Terminology Mapping Use the following technically descriptive alternatives:
 
-Code and Comments: Use gender-neutral language (e.g., "they/them" instead of "he/she").
+Legacy Term:
+master / slave
+blacklist / whitelist
+native (e.g., code)
+man-hours
+sanity check
 
-Technical Terms: Avoid terms like "master/slave" or "blacklist/whitelist." Use technically descriptive alternatives such as "primary/secondary," "leader/follower," or "allowlist/blocklist."
+Recommended Alternative:
+primary / secondary, leader / follower, main
+blocklist / allowlist, denylist / passlist
+built-in, internal, host
+person-hours, engineer-hours
+confidence check, smoke test, validation
 
-Clarity over Idiom: Avoid culturally specific idioms (e.g., "ballpark estimate") that may confuse non-native speakers or engineers in different regions.
 
-Rationale In a global engineering environment, clear and inclusive language is an asset to maintainability. It ensures that the documentation and code are accessible to all engineers, regardless of background, and focuses strictly on technical merit.
+
+Rationale: In a global engineering environment, clarity is paramount. Culturally specific idioms or historically loaded terms create "mental speed bumps" for non-native speakers and can alienate contributors. By using Technically Descriptive Language, we ensure the code is accessible, professional, and focused strictly on technical merit.
+
+Engineering Note: Precision is the goal. "Allowlist" is actually a better technical term than "Whitelist" because it describes exactly what the mechanism does (it allows things), rather than relying on a color-based metaphor.
 
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 9: Naming
 ----------------------------------------
-9.1. General Naming Rules
-Decision
+9.1. Choosing Names
+Decision Names must be descriptive and unambiguous. Avoid "vowel-dropping" abbreviations (e.g., use error_manager instead of err_mngr).
 
-Names should be descriptive; avoid cryptic abbreviations (e.g., use count instead of cnt).
-
-For engineers at the C/Assembly level: do not be afraid of long names for complex objects. The compiler handles the symbol length; the human needs the clarity.
+Rationale: Symbol length has zero cost at runtime. The "cost" is entirely in the human time spent deciphering what cnt actually counts.
 
 9.2. File Names
-Decision
+Decision All lowercase with underscores (snake_case).
 
-File names must be all lowercase and may include underscores (_).
+Example: socket_manager.cc, socket_manager.h.
 
-Format: my_useful_class.cc, my_useful_class.h.
+Note: .cc is the preferred extension for source files; .h for headers.
 
-9.3. Type Names (Classes, Structs, Type Aliases)
-Decision
+9.3. Type Names (Classes, Structs, Aliases)
+Decision Use PascalCase.
 
-Type names must start with a capital letter and have a capital letter for each new word (PascalCase).
+Example: class NetworkPacket;, using BufferList = std::vector<uint8_t>;.
 
-Format: class RequestParser { ... };
+Concept Names (C++20): Use PascalCase to match Type Names, as they represent requirements on types. (e.g., template <typename T> concept Parsable = ...;).
 
 9.4. Variable Names
 Decision
 
-Local Variables: All lowercase with underscores (snake_case).
+Local Variables & Parameters: snake_case (e.g., byte_count).
 
-Class Data Members: snake_case with a trailing underscore.
+Class Data Members: snake_case with a trailing underscore (e.g., retry_limit_).
 
-Constants: k followed by PascalCase (kPascalCase).
+Constants & Enums: kPascalCase (e.g., kMaxBufferSize).
 
-Example
+Rationale The trailing underscore is a "Safety Signal." Inside a 50-line method, it tells the engineer instantly: "If I modify this, I am changing the object's persistent state, which might affect exception safety."
 
-C++
-
-const int kMaxBufferLength = 1024;
-
-class DataHandler {
- private:
-  int error_count_; // Trailing underscore for members
- public:
-  void Process(int retry_limit) { // No underscore for locals/params
-    int local_count = 0;
-  }
-};
 9.5. Function Names
-Decision
+Decision Use PascalCase (e.g., InitializeHardware()).
 
-Regular functions and class methods must use PascalCase (e.g., OpenFile(), CalculateTotal()).
-
-Exception: Very small accessors (getters/setters) may use snake_case to match the variable name (e.g., count() and set_count()), though PascalCase is preferred for consistency.
+Exception: Standard Library "shim" functions or very small accessors may use snake_case to match STL style (e.g., size(), is_empty()).
 
 9.6. Namespace Names
-Decision
+Decision All lowercase, single words preferred. Avoid nested namespaces deeper than two levels.
 
-Namespaces must be all lowercase (e.g., namespace mills { ... }).
+Example: namespace mills::net { ... }
 
-9.7. Enumerator Names
-Decision
+9.7. Template Parameter Names
+Decision Use PascalCase.
 
-Use kPascalCase, similar to constants. Avoid the old C-style ALL_CAPS for enums to prevent collisions with preprocessor macros.
+For generic types, a single letter is acceptable: template <typename T>.
 
-9.8. Exception Class Names
-Decision
+For specific requirements, use descriptive names: template <typename AllocatorType>.
 
-Exception classes must follow the PascalCase naming for types but should explicitly include the suffix Error or Exception.
+9.8. Macro Names
+Decision ALL_CAPS_WITH_UNDERSCORES.
 
-Format: class DeviceTimeoutException : public std::runtime_error { ... };
+Requirement: Must be prefixed with the project name (e.g., MILLS_DEBUG_BREAK).
 
-Rationale The "Exception" suffix is an engineering flag. When a developer sees throw DeviceTimeoutException();, the naming clearly indicates that this object is intended for the stack-unwinding mechanism, not as a standard return type.
+9.9. Exceptions to Naming Rules
+Decision When implementing interfaces for external C libraries or the Standard Library (e.g., custom iterators), you may use the naming convention required by that interface (usually snake_case).
 
-9.9. Macro Names
-Decision
-
-If a macro is absolutely necessary (see Chapter 7), it must be ALL_CAPS_WITH_UNDERSCORES.
-
-Engineering Note on Naming
-Engineering Note: In a system using exceptions, the "Function Name" rule is your first line of defense. If a function is marked noexcept, it is often helpful to denote that in the documentation or, in high-risk low-level code, by a suffix if the architectural fault of a throw is particularly dangerous. However, the best practice is to rely on const-correctness and noexcept keywords rather than Hungarian notation.
-
+Engineering Note on Chapter 9
+Engineering Note: In an exception-based system, use the Exception Class name to document the failure. Never throw a generic std::runtime_error. Use a specific name like HardwareInitializationError. This makes your catch blocks more descriptive and allows for targeted recovery logic based on the type name alone.
+ 
 
 ----------------------------------------------------------------------------------------------------
 CHAPTER 10: Comments
 ----------------------------------------
 10.1. Comment Style
-Decision
+Decision Use the // (double-slash) style for all regular comments.
 
-Use the // (double-slash) style for almost all comments.
+/* ... */ is reserved strictly for the top-of-file legal/header block or for temporary multi-line "code-toggling" during local debugging.
 
-Use /* */ (block comments) only for high-level file headers or for "commenting out" large blocks of code during temporary local debugging.
-
-Rationale Double-slash comments are easier to manage and don't suffer from "nesting" issues. They provide a clean, consistent look across the codebase.
+Punctuation: Comments should be grammatical, starting with a capital letter and ending with a period (unless they are a "hanging" variable comment).
 
 10.2. File Comments
-Definition A top-level comment block at the beginning of every .h and .cc file.
+Decision Every file must start with a header block including:
 
-Decision Every file must start with a comment containing:
+License: Standard project-approved license text.
 
-The license/copyright notice.
+Summary: A brief description of what the file provides (e.g., "Implements the high-speed TCP socket interface").
 
-The purpose of the file (a 1-2 sentence high-level summary).
-
-The primary author or owner team.
+Caveats: Any global warnings (e.g., "This file is not thread-safe").
 
 10.3. Class and Struct Comments
-Decision Every non-trivial class definition must have a comment describing what it is and what it is used for. If a class is thread-safe or has specific requirements for destruction, it must be noted here.
+Decision Every class must have a documentation block immediately preceding its definition.
+
+Focus: Describe the "Invariant" (the state the class guarantees to maintain) and the "Ownership" (does it own its pointers or just observe them?).
 
 10.4. Function Comments (The Exception Contract)
-Definition The documentation preceding a function declaration that defines its interface.
+Decision Every function declaration in a header must document its interface. For an exception-based system, the Exception Contract is mandatory.
 
-Decision In addition to describing inputs and outputs, every function that can throw an exception must document its Exception Contract.
+Throws: List the specific exception types and the conditions that trigger them.
 
-Throws: List the specific exceptions that may be thrown and under what conditions.
+Safety Level: Explicitly state if the function provides the Strong Exception Guarantee (state is rolled back on failure) or Basic Exception Guarantee (no leaks, but state may be modified).
 
-Safety: Note if the function provides the Strong Exception Guarantee (transactional) or only the Basic Guarantee.
+Rationale Since C++ lacks checked exceptions, the comment is the only way a caller can write a correct try/catch block. Failing to document this is a "Fundamental Architectural Fault."
 
-Rationale Since C++ does not have "checked exceptions" like Java, the comment is the only way a caller knows how to safely use your function.
-
-Engineering Note: If a function is marked noexcept, you do not need a "Throws" section. However, for functions that do throw, failing to document the contract is a fundamental architectural fault. It forces the caller to read your implementation to know how to handle errors, violating the principle of encapsulation.
-
-Example
-
-C++
-
-// GOOD: Clear contract documentation
-// Reads the configuration file from the given path.
-// 
-// Inputs: path - The absolute path to the .conf file.
-// Returns: A Config object.
-// Throws: 
-//   - FileSystemException if the file is missing.
-//   - ParseException if the format is invalid.
-// Note: Provides the Strong Exception Guarantee.
-Config LoadConfig(const std::string& path);
 10.5. Implementation Comments (The "Why")
 Decision
 
-Do not comment the obvious (e.g., i++; // Increment i).
+Intent over Action: Do not describe what the code is doing (e.g., i++; // increment). Describe why it is doing it (e.g., i++; // Skip the header byte).
 
-Do comment "tricky" logic, workarounds for compiler bugs, or performance optimizations that might look unintuitive.
+Technical Debt: Any workaround for a hardware bug, compiler quirk, or assembly-level optimization must be explicitly documented with the reasoning.
 
-If you use reinterpret_cast or a const_cast, you must provide a comment explaining why the type system is being bypassed.
+Type Bypassing: Every reinterpret_cast or const_cast must have a comment explaining why the type system is being bypassed.
 
-10.6. TODO Comments
-Decision Use TODO(username): description for temporary code or tasks that need to be completed later. Do not leave "naked" TODOs without a name/owner.
+10.6. Variable Comments
+Decision * Class Members: Comments should be above the member or to the right if they are short.
+
+Units: For numerical variables, the units must be documented (e.g., int timeout_ms_; // Timeout in milliseconds).
+
+10.7. TODO Comments
+Decision Format: // TODO(username): Description of task.
+
+Requirement: Every TODO must have a name attached.
+
+Rationale: A TODO without an owner is "abandoned code" that never gets finished.
+
+Engineering Note on Chapter 10
+Engineering Note: Use the [[deprecated("reason")]] attribute in conjunction with comments. The attribute alerts the compiler, while the comment provides the migration path for the engineer. In an exception-enabled system, if you deprecate a function because its exception behavior was unsafe, use the comment to explicitly point to its safer replacement.
 
 
 
 ----------------------------------------------------------------------------------------------------
-CHAPTER 11:
-----------------------------------------
 CHAPTER 11: Formatting
-Definition The physical layout of the code (whitespace, braces, line lengths).
-
+----------------------------------------
+11.1. General Principles
 Decision
 
-Line Length: 100 characters. Modern monitors can handle more than the traditional 80, but 100 remains scannable without horizontal scrolling.
+Line Length: 100 characters.
 
-Indentation: Use Spaces only. 2 spaces per indentation level. Tabs are forbidden to ensure consistency across different IDEs and terminal viewers.
+Indentation: 2 spaces. Tabs are strictly forbidden.
 
-Brace Style: Use K&R Style (the "Egyptian" brace). The opening brace stays on the same line as the statement; the closing brace starts a new line.
+Brace Style: K&R (Egyptian Braces). Opening braces stay on the same line as the control statement.
 
-Rationale Formatting is about Muscle Memory. Once the team agrees on a style, your brain stops "reading" the formatting and starts reading the logic. We choose 2 spaces and K&R to maximize vertical screen real estate.
+11.2. Function Declarations and Calls
+Decision
+
+If a function declaration or call exceeds the line limit, wrap it.
+
+Indentation: Use a 4-space "hanging indent" for wrapped parameters to distinguish them from the 2-space indented function body.
+
+Return Values: Do not put the return type on a separate line unless using a trailing return type for complex templates.
+
+11.3. Pointer and Reference Alignment
+Decision Align the asterisk (*) or ampersand (&) with the Type, not the variable name.
+
+YES: int* buffer;, const std::string& name;
+
+NO: int *buffer;, const std::string &name;
+
+Rationale In C++, the pointer-ness or reference-ness is a fundamental part of the Type. This alignment emphasizes the type-safety of the language.
+
+11.4. Braced Initializer Lists
+Decision
+
+Use braced initialization {} for POD structs and simple aggregates.
+
+For constructors with side effects (or where {} would trigger a std::initializer_list overload unexpectedly), use ().
+
+Spacing: No spaces inside the braces for simple lists: Point p{x, y};. Use one space for complex ones: auto data = MyType{ arg1, arg2 };.
+
+11.5. Looping and Branching
+Decision
+
+Mandatory Braces: Always use braces for if, else, for, and while statements, even if the body is a single line.
+
+Rationale: This prevents "Dangling Else" bugs and ensures that adding a log statement or a throw to a branch later doesn't break the logic.
+
+11.6. Constructor Initializer Lists
+Decision
+
+If the list fits on one line, keep it there.
+
+If it wraps, put the colon on a new line, indented 2 spaces, and list each member on its own line.
+
+Order: Members must be initialized in the order they are declared in the class.
 
 Example
 
 C++
 
-// GOOD: 2-space indentation, K&R braces
-void MyFunction(int value) {
-  if (value > kLimit) {
-    DoSomething();
-  } else {
-    DoNothing();
-  }
+MyClass::MyClass(int x, int y)
+  : x_count_(x),
+    y_count_(y),
+    buffer_(std::make_unique<char[]>(x)) {
 }
-11.1. Function Calls and Long Lines
-Decision If a function call or declaration is too long for one line, wrap it and indent the subsequent lines by 4 spaces (double indentation) to distinguish them from the function body.
+Rationale C++ initializes members in declaration order, regardless of the list order. Matching the list to the declaration order prevents "Use-before-init" bugs during complex construction.
 
-CHAPTER 12: Exceptions to the Rules
-Definition Recognizing that no style guide covers 100% of cases.
-
+11.7. Horizontal and Vertical Whitespace
 Decision
 
-Legacy Code: When modifying a file that was written in a different style (e.g., an old C library), match the existing style of that file to maintain local consistency.
+Operators: Use one space around assignment (=), comparison (==), and binary operators (+, -, &&, ||).
 
-Generated Code: Code produced by tools (like Protocol Buffers or scanners) is exempt from these rules.
+Vertical: Use one blank line between function definitions and between logical sections within a function. Do not exceed two consecutive blank lines.
 
-Hardware Constraints: In extreme assembly/embedded contexts where exceptions are physically unsupported by the hardware, the "Exceptions Permitted" rule is naturally suspended.
+11.8. Preprocessor Directives
+Decision Preprocessor directives (#if, #define) are always left-aligned (column 0), even if they are inside an indented block of code.
+
+Engineering Note on Chapter 11
+Engineering Note: Formatting is a tool for Code Review. When every file follows the same spacing rules, "weird" code (like a manual reinterpret_cast or a raw new) stands out visually. Use vertical whitespace to separate the "Setup," "Action," and "Commit" phases of your functions to help reviewers spot where an exception might disrupt the flow.
 
 
 ----------------------------------------------------------------------------------------------------
-CHAPTER 12:
+CHAPTER 12: Exceptions to the Rules
 ----------------------------------------
+12.1. Existing Non-conformant Code
+Decision You may diverge from these rules when modifying legacy codebases that follow a different standard.
 
+Priority: Local consistency within a file or module takes precedence over this guide to maintain readability for existing maintainers.
 
+Refactoring: When a file is modified more than 50% by line count, it must be converted to full Mills Style compliance.
 
+12.2. Windows Code
+Windows development involves specific patterns derived from the Win32 API and COM. While we use a unified style, the following rules apply for Windows-specific modules:
 
+1. Naming and Types
 
+Naming: Do not use Hungarian notation (e.g., dwOffset). Stick to Mills naming (offset_).
+
+Synonyms: Use Windows types (HANDLE, HWND, DWORD) only when interacting directly with the Windows API. Convert to standard C++ types (uint32_t, bool) as soon as the data enters the "Mills" logic layer.
+
+Strings: Use wchar_t and std::wstring for Windows Unicode APIs. Use the L"string" literal format. Avoid TCHAR unless you are supporting legacy non-Unicode environments.
+
+2. Exception Handling (SEH vs. C++ Exceptions)
+
+Decision: Strictly use C++ Standard Exceptions (try/catch).
+
+SEH: Do not use __try / __except (Structured Exception Handling) for general logic.
+
+Interop: If you must catch hardware faults (like STATUS_ACCESS_VIOLATION), use a top-level SEH-to-C++ exception translator or let the program crash. Mixing __try and try in the same function is prohibited.
+
+3. COM and Multiple Inheritance
+
+Decision: While multiple inheritance is generally discouraged (Chapter 4), it is permitted when implementing COM interfaces or using ATL/WTL classes.
+
+4. Compiler Settings
+
+Requirement: Use Warning Level 4 (/W4) or /Wall in MSVC. Treat all warnings as errors (/WX).
+
+Language Standard: Ensure the /std:c++20 (or c++latest) flag is set to enable the features defined in Chapter 1.
+
+5. Pragmas and Attributes
+
+Decision: Avoid #pragma once; use standard Mills #ifndef guards.
+
+DLLs: Use __declspec(dllexport) and __declspec(dllimport) through a project-specific macro (e.g., MILLS_API) to ensure portability.
+
+12.3. Precompiled Headers (PCH)
+Decision To maintain project portability, do not include PCH headers (like stdafx.h or pch.h) explicitly in every file.
+
+Alternative: Use the compiler's "Force Include" (/FI on MSVC) to inject the PCH automatically. This allows the same code to be compiled on Linux/GCC without modification.
+
+Engineering Note on Chapter 12
+Engineering Note: Windows API functions often return HRESULT or DWORD error codes. Since Mills is an exception-based guide, create a small "Shim" utility to check these returns and throw a corresponding WindowsException. This keeps your high-level logic clean and consistent with our Chapter 7 policy.
+
+Example: CheckWin32(CreateFile(...)); // Throws on failure
 
 
